@@ -1,18 +1,25 @@
 import { Handler } from "aws-lambda";
-
+import { APIGatewayProxyHandlerV2 } from "aws-lambda";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, GetCommand } from "@aws-sdk/lib-dynamodb";
 
 const ddbDocClient = createDDbDocClient();
 
-export const handler: Handler = async (event, context) => {
-  try {
-    // Print Event
-    console.log("Event: ", JSON.stringify(event?.queryStringParameters));
-    const parameters = event?.queryStringParameters;
-    const movieId = parameters ? parseInt(parameters.movieId) : undefined;
+// export const handler: Handler = async (event, context) => {
+//   try {
+//     // Print Event
+//     console.log("Event: ", JSON.stringify(event?.queryStringParameters));
+//     const parameters = event?.queryStringParameters;
+//     const movieId = parameters ? parseInt(parameters.movieId) : undefined;
 
-    if (!movieId) {
+//     if (!movieId) {
+  export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {     // Note change
+    try {
+      console.log("Event: ", event);
+      const parameters  = event?.pathParameters;
+      const movieId = parameters?.movieId ? parseInt(parameters.movieId) : undefined;
+  
+      if (!movieId) {
       return {
         statusCode: 404,
         headers: {
