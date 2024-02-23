@@ -4,36 +4,28 @@ import { DynamoDBDocumentClient, DeleteCommand } from "@aws-sdk/lib-dynamodb";
 
 const ddbDocClient = createDDbDocClient();
 
-export const handler: APIGatewayProxyHandlerV2 = async (event) => {
+export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
   try {
     console.log("Event: ", event);
-    const movieId = event.pathParameters?.movieId;
-
+    const parameters  = event?.pathParameters;
+    const movieId = parameters?.movieId ? parseInt(parameters.movieId) : undefined;
     if (!movieId) {
       return {
         statusCode: 400,
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ message: "Missing movieId in path parameters" }),
+        body: JSON.stringify({ message: "Missing movieId" }),
       };
     }
 
-    // Assuming movieId is a number, convert it from string to number.
-    const numericMovieId = parseInt(movieId, 10);
-    if (isNaN(numericMovieId)) {
-      return {
-        statusCode: 400,
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ message: "movieId must be a valid number" }),
-      };
-    }
-
-    await ddbDocClient.send(new DeleteCommand({
-      TableName: process.env.TABLE_NAME,
-      Key: { id: numericMovieId }, // Ensure your table's partition key name is 'id' and it's a number.
-    }));
+    await ddbDocClient.send(
+      new DeleteCommand({
+        TableName: process.env.TABLE_NAME,
+        Key: { id: movieId }, 
+      })
+    );
 
     return {
-      statusCode: 204, // No Content
+      statusCode: 204,
       headers: { "content-type": "application/json" },
       body: '',
     };
@@ -42,7 +34,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
     return {
       statusCode: 500,
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ error: "Failed to delete movie" }),
+      body: JSON.stringify({ error: error.message || error }),
     };
   }
 };
